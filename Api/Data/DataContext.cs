@@ -1,4 +1,3 @@
-using System;
 using Api.Entities;
 using Microsoft.EntityFrameworkCore;
 

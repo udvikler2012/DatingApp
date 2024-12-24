@@ -1,4 +1,3 @@
-using System;
 using Api.Data;
 using Api.Interfaces;
 using Api.Services;
@@ -16,6 +15,8 @@ services.AddDbContext<DataContext>(opt =>
 });
 services.AddCors();
 services.AddScoped<ITokenService, TokenService>();
+services.AddScoped<IUserRepository,UserRepository>();
+services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 return services;
     }
