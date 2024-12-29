@@ -16,7 +16,7 @@ import { Photo } from '../../_models/photo';
 })
 export class PhotoEditorComponent implements OnInit {
   private accountService = inject(AccountService);
-  private membersService=inject(MembersService);
+  private membersService = inject(MembersService);
   member = input.required<Member>();
   uploader?: FileUploader;
   hasBaseDropZoneOver = false;
@@ -31,19 +31,29 @@ export class PhotoEditorComponent implements OnInit {
     this.hasBaseDropZoneOver = e;
   }
 
-  setMainPhoto(photo:Photo){
+  deletePhoto(photo: Photo) {
+    this.membersService.deletePhoto(photo).subscribe({
+      next: _ => {
+        const updatedMember = { ...this.member() };
+        updatedMember.photos = updatedMember.photos.filter(x => x.id !== photo.id);
+        this.memberChange.emit(updatedMember);
+      }
+    })
+  }
+
+  setMainPhoto(photo: Photo) {
     this.membersService.setMainPhoto(photo).subscribe({
-      next:_ => {
-        const user=this.accountService.currentUser();
-        if (user){
-          user.photoUrl=photo.url;
+      next: _ => {
+        const user = this.accountService.currentUser();
+        if (user) {
+          user.photoUrl = photo.url;
           this.accountService.setCurrentUser(user);
         }
-        const updatedMember={...this.member()}
-        updatedMember.photoUrl=photo.url;
-        updatedMember.photos.forEach(p=>{
-          if (p.isMain) p.isMain=false;
-          if (p.id === photo.id ) p.isMain=true;
+        const updatedMember = { ...this.member() }
+        updatedMember.photoUrl = photo.url;
+        updatedMember.photos.forEach(p => {
+          if (p.isMain) p.isMain = false;
+          if (p.id === photo.id) p.isMain = true;
         });
         this.memberChange.emit(updatedMember);
       }
