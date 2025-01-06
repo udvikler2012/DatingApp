@@ -21,7 +21,7 @@ public class MessagesController(IMessageRepository messageRepository, IUserRepos
 
         var sender = await userRepository.GetUserByUsernameAsync(username);
         var recipient = await userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUserName);
-        if (recipient == null || sender == null) return BadRequest("Cannopt send message");
+        if (recipient == null || sender == null || sender.UserName==null || recipient.UserName==null) return BadRequest("Cannopt send message");
 
         var message = new Message
         {
