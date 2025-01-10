@@ -1,6 +1,5 @@
 <div class="mb-3 form-floating">
-    <input [class.is-invalid]="[ngControl.control?.touched] && control.invalid" [type]="type()" class="form-control"
-        [formControl]="control" placeholder="{{label()}}">
+    <input [type]="type()" class="form-control is-invalid" [formControl]="control" placeholder="{{label()}}">
     <label>{{label()}}</label>
     <div *ngIf="control.hasError('required')" class="invalid-feedback text-start">Please enter {{label()}}</div>
     <div *ngIf="control.hasError('minlength')" class="invalid-feedback text-start">{{label()}} must be min
