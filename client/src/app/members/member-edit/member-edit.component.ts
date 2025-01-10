@@ -10,11 +10,10 @@ import { TimeagoModule } from 'ngx-timeago';
 import { DatePipe } from '@angular/common';
 
 @Component({
-  selector: 'app-member-edit',
-  standalone: true,
-  imports: [TabsModule, FormsModule, PhotoEditorComponent,TimeagoModule,DatePipe],
-  templateUrl: './member-edit.component.html',
-  styleUrl: './member-edit.component.css'
+    selector: 'app-member-edit',
+    imports: [TabsModule, FormsModule, PhotoEditorComponent, TimeagoModule, DatePipe],
+    templateUrl: './member-edit.component.html',
+    styleUrl: './member-edit.component.css'
 })
 export class MemberEditComponent implements OnInit {
   @ViewChild('editForm') editForm?: NgForm;

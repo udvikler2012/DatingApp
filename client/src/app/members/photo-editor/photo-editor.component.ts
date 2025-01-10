@@ -8,11 +8,10 @@ import { MembersService } from '../../_services/members.service';
 import { Photo } from '../../_models/photo';
 
 @Component({
-  selector: 'app-photo-editor',
-  standalone: true,
-  imports: [NgIf, NgFor, NgStyle, NgClass, FileUploadModule, DecimalPipe],
-  templateUrl: './photo-editor.component.html',
-  styleUrl: './photo-editor.component.css'
+    selector: 'app-photo-editor',
+    imports: [NgIf, NgFor, NgStyle, NgClass, FileUploadModule, DecimalPipe],
+    templateUrl: './photo-editor.component.html',
+    styleUrl: './photo-editor.component.css'
 })
 export class PhotoEditorComponent implements OnInit {
   private accountService = inject(AccountService);

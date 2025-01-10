@@ -3,11 +3,10 @@ import { Component, input, Self } from '@angular/core';
 import { ControlValueAccessor, FormControl, NgControl, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-text-input',
-  standalone: true,
-  imports: [ReactiveFormsModule, NgIf],
-  templateUrl: './text-input.component.html',
-  styleUrl: './text-input.component.css'
+    selector: 'app-text-input',
+    imports: [ReactiveFormsModule, NgIf],
+    templateUrl: './text-input.component.html',
+    styleUrl: './text-input.component.css'
 })
 export class TextInputComponent implements ControlValueAccessor {
   label = input<string>('');

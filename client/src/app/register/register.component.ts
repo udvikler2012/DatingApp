@@ -6,11 +6,10 @@ import { DatePickerComponent } from '../_forms/date-picker/date-picker.component
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-register',
-  standalone: true,
-  imports: [ReactiveFormsModule, TextInputComponent, DatePickerComponent],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.css'
+    selector: 'app-register',
+    imports: [ReactiveFormsModule, TextInputComponent, DatePickerComponent],
+    templateUrl: './register.component.html',
+    styleUrl: './register.component.css'
 })
 export class RegisterComponent implements OnInit {
   private accountService = inject(AccountService);

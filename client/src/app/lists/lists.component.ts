@@ -6,11 +6,10 @@ import { MemberCardComponent } from "../members/member-card/member-card.componen
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 
 @Component({
-  selector: 'app-lists',
-  standalone: true,
-  imports: [FormsModule, ButtonsModule, MemberCardComponent, PaginationModule],
-  templateUrl: './lists.component.html',
-  styleUrl: './lists.component.css'
+    selector: 'app-lists',
+    imports: [FormsModule, ButtonsModule, MemberCardComponent, PaginationModule],
+    templateUrl: './lists.component.html',
+    styleUrl: './lists.component.css'
 })
 export class ListsComponent implements OnInit, OnDestroy {
   likesService = inject(LikesService);
