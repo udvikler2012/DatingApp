@@ -1,16 +1,16 @@
-using System;
+// using System;
 
-namespace Api.Extensions;
+// namespace Api.Extensions;
 
-public static class DateTimeExtensions
-{
+// public static class DateTimeExtensions
+// {
 
-public static int CalculateAge(this DateOnly dob){
-    var today=DateOnly.FromDateTime(DateTime.Now);
+// public static int CalculateAge(this DateOnly dob){
+//     var today=DateOnly.FromDateTime(DateTime.Now);
 
-    var age = today.Year - dob.Year;
-    if (dob > today.AddYears(-age)) age--;
+//     var age = today.Year - dob.Year;
+//     if (dob > today.AddYears(-age)) age--;
 
-    return age;
-}
-}
+//     return age;
+// }
+// }

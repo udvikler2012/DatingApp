@@ -1,8 +1,8 @@
-using Api.Entities;
+// using Api.Entities;
 
-namespace Api.Interfaces;
+// namespace Api.Interfaces;
 
-public interface ITokenService
-{
-    Task<string> CreateToken(AppUser user);
-}
+// public interface ITokenService
+// {
+//     Task<string> CreateToken(AppUser user);
+// }

@@ -1,22 +1,8 @@
-using Microsoft.AspNetCore.Identity;
-
 namespace Api.Entities;
 
-public class AppUser:IdentityUser<int>
+public class AppUser
 {
-    public DateOnly DateOfBirth { get; set; }
-    public required string KnownAs { get; set; }
-    public DateTime Created { get; set; } = DateTime.UtcNow;
-    public DateTime LastActive { get; set; } = DateTime.UtcNow;
-    public required string Gender { get; set; }
-    public string? Introduction { get; set; }
-    public string? LookingFor { get; set; }
-    public required string City { get; set; }
-    public required string Country { get; set; }
-    public List<Photo> Photos { get; set; } = [];
-    public List<UserLike> LikedByUsers { get; set; } = [];
-    public List<UserLike> LikedUsers { get; set; } = [];
-    public List<Message> MessagesSent { get; set; } = [];
-    public List<Message> MessagesReceived { get; set; } = [];
-    public ICollection<AppUserRole> UserRoles { get; set; }=[];
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public required string DisplayName { get; set; }
+    public required string Email { get; set; }
 }
