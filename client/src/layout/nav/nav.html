@@ -1,4 +1,4 @@
-<header class="p-3 w-full fixed top-0 z-50 bg-gradient-to-r from-primary to-black">
+<header class="p-3 w-full fixed top-0 z-50 bg-linear-to-r from-primary to-black">
     <div class="flex align-middle items-center px-10 mx-auto gap-6">
         <div class="text-white">
             <a routerLink="/" routerLinkActive="text-accent" [routerLinkActiveOptions]="{exact:true}"
@@ -18,6 +18,11 @@
             }
             <a routerLink="/errors" routerLinkActive="text-accent">Errors</a>
         </nav>
+
+        @if (busyService.busyRequestCount()>0) {
+        <span class="loading loading-spinner text-accent"></span>
+        }
+
         <div class="flex align-middle ml-auto gap-3">
             <div class="dropdown mr-5 dropdown-end">
                 <button tabindex="1"
@@ -30,11 +35,11 @@
                     <span>{{selectedTheme()}}</span>
 
                 </button>
-                <ul tabindex="1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+                <ul tabindex="1" class="dropdown-content z-50 menu bg-base-100 rounded-box w-52 p-2 shadow-sm">
                     @for (theme of themes; track $index) {
-                        <li (click)="handleSelectTheme(theme)">
-                            <a>{{theme}}</a>
-                        </li>
+                    <li (click)="handleSelectTheme(theme)">
+                        <a>{{theme}}</a>
+                    </li>
                     }
                 </ul>
             </div>
@@ -45,7 +50,7 @@
                     <span>{{user.displayName}}</span>
                 </div>
                 <ul tabindex="-1" class="dropdown-content  menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-                    <li><a>Edit profile</a></li>
+                    <li><a routerLink="/members/{{user.id}}">Edit profile</a></li>
                     <li><a (click)="logout()">Logout</a></li>
                 </ul>
             </div>

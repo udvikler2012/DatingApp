@@ -11,6 +11,13 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
         return await context.Members.FindAsync(id);
     }
 
+    public async Task<Member?> GetMemberForUpdate(string id)
+    {
+        return await context.Members
+            .Include(x => x.User)
+            .SingleOrDefaultAsync(x => x.Id == id);
+    }
+
     public async Task<IReadOnlyList<Member>> GetMembersAsync()
     {
         return await context.Members.ToListAsync();
@@ -31,6 +38,6 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
 
     public void Update(Member member)
     {
-         context.Entry(member).State = EntityState.Modified;
+        context.Entry(member).State = EntityState.Modified;
     }
 }
