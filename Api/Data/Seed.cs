@@ -1,48 +1,64 @@
-// using System.Text.Json;
-// using Api.Entities;
-// using Microsoft.AspNetCore.Identity;
-// using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Api.Dtos;
+using Api.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
-// namespace Api.Data;
+namespace Api.Data;
 
-// public class Seed
-// {
-//     public static async Task SeedUsers(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
-//     {
-//         if (await userManager.Users.AnyAsync()) return;
+public class Seed
+{
+    public static async Task SeedUsers(AppDbContext context)
+    {
+        if (await context.Users.AnyAsync()) return;
 
-//         var userData = await File.ReadAllTextAsync("Data/UserSeedData.json");
-//         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-//         var users = JsonSerializer.Deserialize<List<AppUser>>(userData, options);
+        var memberData = await File.ReadAllTextAsync("Data/UserSeedData.json");
+        var members = JsonSerializer.Deserialize<List<SeedUserDto>>(memberData);
+        if (members == null)
+        {
+            Console.WriteLine("No members in seed data");
+            return;
+        }
 
-//         if (users == null) return;
+        foreach (var member in members)
+        {
+            using var hmac = new HMACSHA512();
+            
+            var user = new AppUser
+            {
+                Id = member.Id,
+                Email = member.Email,
+                DisplayName = member.DisplayName,
+                ImageUrl = member.ImageUrl,
+                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("Pa$$w0rd")),
+                PasswordSalt = hmac.Key,
+                Member = new Member
+                {
+                    Id = member.Id,
+                    DisplayName = member.DisplayName,
+                    Description = member.Description,
+                    DateOfBirth = member.DateOfBirth,
+                    ImageUrl = member.ImageUrl,
+                    Gender = member.Gender,
+                    City = member.City,
+                    Country = member.Country,
+                    LastActive = member.LastActive,
+                    Created = member.Created
 
-//         var roles = new List<AppRole>{
-//             new() {Name="Member"},
-//             new() {Name="Admin"},
-//             new() {Name="Moderator"}
-//         };
-//         foreach (var role in roles)
-//         {
-//             await roleManager.CreateAsync(role);
-//         }
+                }
+            };
 
-//         foreach (var user in users)
-//         {
-//             user.UserName = user.UserName!.ToLower();
-//             await userManager.CreateAsync(user, "Pa$$w0rd");
-//             await userManager.AddToRoleAsync(user, "Member");
-//         }
+            user.Member.Photos.Add(new Photo
+            {
+                Url = member.ImageUrl!,
+                MemberId = member.Id
+            });
 
-//         var admin = new AppUser
-//         {
-//             UserName = "admin",
-//             KnownAs = "",
-//             Gender = "",
-//             City = "",
-//             Country = ""
-//         };
-//         await userManager.CreateAsync(admin, "Pa$$w0rd");
-//         await userManager.AddToRolesAsync(admin, ["Admin", "Moderator"]);
-//     }
-// }
+            context.Users.Add(user);
+        }
+
+        await context.SaveChangesAsync();
+    }
+}
