@@ -1,6 +1,7 @@
 using Api.Dtos;
 using Api.Entities;
 using Api.Extensions;
+using Api.Helpers;
 using Api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,11 @@ namespace Api.Controllers
     public class MembersController(IMemberRepository memberRepository, IPhotoService photoService) : BaseApiController
     {
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers()
+        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers([FromQuery] MemberParams memberParams)
         {
-            return Ok(await memberRepository.GetMembersAsync());
+            memberParams.CurrentMemberId = User.GetMemberId();
+            return Ok(await memberRepository.GetMembersAsync(memberParams));
         }
-
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Member>> GetMember(string id)
@@ -72,7 +73,7 @@ namespace Api.Controllers
                 member.ImageUrl = photo.Url;
                 member.User.ImageUrl = photo.Url;
             }
-            
+
             member.Photos.Add(photo);
 
             if (await memberRepository.SaveAllAsync()) return photo;
@@ -110,8 +111,8 @@ namespace Api.Controllers
             }
             if (photo.PublicId != null)
             {
-                var result=await photoService.DeletePhotoAsync(photo.PublicId);
-                if (result.Error!=null) return BadRequest(result.Error.Message);
+                var result = await photoService.DeletePhotoAsync(photo.PublicId);
+                if (result.Error != null) return BadRequest(result.Error.Message);
             }
             member.Photos.Remove(photo);
 
