@@ -66,11 +66,13 @@ namespace Api.Controllers
                 PublicId = result.PublicId,
                 MemberId = User.GetMemberId()
             };
+
             if (member.ImageUrl == null)
             {
                 member.ImageUrl = photo.Url;
                 member.User.ImageUrl = photo.Url;
             }
+            
             member.Photos.Add(photo);
 
             if (await memberRepository.SaveAllAsync()) return photo;
