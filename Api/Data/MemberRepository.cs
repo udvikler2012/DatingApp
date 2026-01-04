@@ -24,6 +24,7 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
     {
         var query = context.Members.AsQueryable();
 
+        // Filtering
         query = query.Where(x => x.Id != memberParams.CurrentMemberId);
 
         if (memberParams.Gender != null)
@@ -34,6 +35,13 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
         var minDob = DateOnly.FromDateTime(DateTime.Today.AddYears(-memberParams.MaxAge - 1));
         var maxDob = DateOnly.FromDateTime(DateTime.Today.AddYears(-memberParams.MinAge));
         query = query.Where(x => x.DateOfBirth >= minDob && x.DateOfBirth <= maxDob);
+
+        // Sorting
+        query = memberParams.OrderBy switch
+        {
+            "created" => query.OrderByDescending(x => x.Created),
+            _ => query.OrderByDescending(x => x.LastActive)
+        };
 
         return await PaginationHelper.CreateAsync(
             query,

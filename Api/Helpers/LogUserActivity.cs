@@ -1,23 +1,21 @@
-// using Api.Extensions;
-// using Api.Interfaces;
-// using Microsoft.AspNetCore.Mvc.Filters;
+using Api.Data;
+using Api.Extensions;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.EntityFrameworkCore;
 
-// namespace Api.Helpers;
+namespace Api.Helpers;
 
-// public class LogUserActivity : IAsyncActionFilter
-// {
-//     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-//     {
-//         var resultContext = await next();
+public class LogUserActivity : IAsyncActionFilter
+{
+    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
+        var resultContext = await next();
+        if (context.HttpContext.User.Identity?.IsAuthenticated != true) return;
 
-//         if (context.HttpContext.User.Identity?.IsAuthenticated != true) return;
-
-//         var userId = resultContext.HttpContext.User.GetUserId();
-//         var unitOfWork = resultContext.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
-//         var user = await unitOfWork.UserRepository.GetUserByIdAsync(userId);
-//         if (user == null) return;
-
-//         user.LastActive = DateTime.UtcNow;
-//         await unitOfWork.Complete();
-//     }
-// }
+        var memberId = resultContext.HttpContext.User.GetMemberId();
+        var dbContext = resultContext.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+        await dbContext.Members
+        .Where(x => x.Id == memberId)
+        .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.LastActive, DateTime.UtcNow));
+    }
+}
