@@ -1,67 +1,67 @@
-// using Api.Dto;
-// using Api.Entities;
-// using Api.Helpers;
-// using Api.Interfaces;
-// using AutoMapper;
-// using AutoMapper.QueryableExtensions;
-// using Microsoft.EntityFrameworkCore;
+using Api.Entities;
+using Api.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
-// namespace Api.Data;
+namespace Api.Data;
 
-// public class LikesRepository(DataContext context, IMapper mapper) : ILikesRepository
-// {
-//     public void AddLike(UserLike like)
-//     {
-//         context.Likes.Add(like);
-//     }
+public class LikesRepository(AppDbContext context) : ILikesRepository
+{
+    public void AddLike(MemberLike like)
+    {
+        context.Likes.Add(like);
+    }
 
-//     public void DeleteLike(UserLike like)
-//     {
-//         context.Likes.Remove(like);
-//     }
+    public void DeleteLike(MemberLike like)
+    {
+        context.Likes.Remove(like);
+    }
 
-//     public async Task<IEnumerable<int>> GetCurrentUserLikeIds(int currentUserId)
-//     {
-//         return await context.Likes
-//         .Where(x => x.SourceUserId == currentUserId)
-//         .Select(x => x.TargetUserId)
-//         .ToListAsync();
-//     }
+    public async Task<IReadOnlyList<string>> GetCurrentMemberLikeIds(string memberId)
+    {
+        return await context.Likes
+        .Where(x => x.SourceMemberId == memberId)
+        .Select(x => x.TargetMemberId)
+        .ToListAsync();
+    }
 
-//     public async Task<UserLike?> GetUserLike(int sourceUserId, int targetUserId)
-//     {
-//         return await context.Likes.FindAsync(sourceUserId, targetUserId);
-//     }
+    public async Task<MemberLike?> GetMemberLike(string sourceMemberId, string targetMemberId)
+    {
+        return await context.Likes.FindAsync(sourceMemberId, targetMemberId);
+    }
 
-//     public async Task<PagedList<MemberDto>> GetUserLikes(LikesParams likesParams)
-//     {
-//         var likes = context.Likes.AsQueryable();
+    public Task<IReadOnlyList<Member>> GetMemberLikes(string predicate, string memberId)
+    {
+        throw new NotImplementedException();
+    }
 
-//         IQueryable<MemberDto> query;
-//         switch (likesParams.Predicate)
-//         {
-//             case "liked":
-//                 query = likes
-//                 .Where(x => x.SourceUserId == likesParams.UserId)
-//                 .Select(x => x.TargetUser)
-//                 .ProjectTo<MemberDto>(mapper.ConfigurationProvider);
-//                 break;
-//             case "likedBy":
-//                 query = likes
-//                 .Where(x => x.TargetUserId == likesParams.UserId)
-//                 .Select(x => x.SourceUser)
-//                 .ProjectTo<MemberDto>(mapper.ConfigurationProvider);
-//                 break;
-//             default:
-//                 var likeIds = await GetCurrentUserLikeIds(likesParams.UserId);
+    public async Task<IReadOnlyList<Member>> GetUserLikes(string predicate, string memberId)
+    {
+        var query = context.Likes.AsQueryable();
 
-//                 query = likes
-//                 .Where(x => x.TargetUserId == likesParams.UserId && likeIds.Contains(x.SourceUserId))
-//                 .Select(x => x.SourceUser)
-//                 .ProjectTo<MemberDto>(mapper.ConfigurationProvider);
-//                 break;
-//         }
+        switch (predicate)
+        {
+            case "liked":
+                return await query
+                .Where(x => x.SourceMemberId == memberId)
+                .Select(x => x.TargetMember)
+                .ToListAsync();
+            case "likedBy":
+                return await query
+                .Where(x => x.TargetMemberId == memberId)
+                .Select(x => x.SourceMember)
+                .ToListAsync();
+            default:
+                var likeIds = await GetCurrentMemberLikeIds(memberId);
 
-//         return await PagedList<MemberDto>.CreateAsync(query,likesParams.PageNumber,likesParams.PageSize);
-//     }
-// }
+                return await query
+                .Where(x => x.TargetMemberId == memberId && likeIds.Contains(x.SourceMemberId))
+                .Select(x => x.SourceMember)
+                .ToListAsync();
+        }
+    }
+
+    public async Task<bool> SaveAllChanges()
+    {
+        return await context.SaveChangesAsync() > 0;
+    }
+}
