@@ -29,12 +29,7 @@ public class LikesRepository(AppDbContext context) : ILikesRepository
         return await context.Likes.FindAsync(sourceMemberId, targetMemberId);
     }
 
-    public Task<IReadOnlyList<Member>> GetMemberLikes(string predicate, string memberId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<IReadOnlyList<Member>> GetUserLikes(string predicate, string memberId)
+    public async Task<IReadOnlyList<Member>> GetMemberLikes(string predicate, string memberId)
     {
         var query = context.Likes.AsQueryable();
 
