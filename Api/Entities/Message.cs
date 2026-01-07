@@ -2,11 +2,7 @@ namespace Api.Entities;
 
 public class Message
 {
-    public int Id { get; set; }
-    public int SenderId { get; set; }
-    public required string SenderUsername { get; set; }
-    public int RecipientId { get; set; }
-    public required string RecipientUsername { get; set; }
+    public string Id { get; set; } = Guid.NewGuid().ToString();
     public required string Content { get; set; }
     public DateTime? DateRead { get; set; }
     public DateTime MessageSent { get; set; } = DateTime.UtcNow;
@@ -14,6 +10,8 @@ public class Message
     public bool RecipientDeleted { get; set; }
 
     // navigation
-    public AppUser Sender { get; set; } = null!;
-    public AppUser Recipient { get; set; } = null!;
+    public required string SenderId { get; set; }
+    public Member Sender { get; set; } = null!;
+    public required string RecipientId { get; set; }
+    public Member Recipient { get; set; } = null!;
 }
