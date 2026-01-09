@@ -3,6 +3,7 @@ using Api.Entities;
 using Api.Extensions;
 using Api.Helpers;
 using Api.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Data;
 
@@ -54,9 +55,8 @@ public class MessageRepository(AppDbContext context) : IMessageRepository
 
         query = messageParams.Container switch
         {
-            "Inbox" => query.Where(x => x.RecipientId == messageParams.MemberId),
-            "Outbox" => query.Where(x => x.SenderId == messageParams.MemberId),
-            _ => query.Where(x => x.RecipientId == messageParams.MemberId)
+            "Outbox" => query.Where(x => x.SenderId == messageParams.MemberId && x.SenderDeleted == false),
+            _ => query.Where(x => x.RecipientId == messageParams.MemberId && x.RecipientDeleted == false)
         };
         var messageQuery = query.Select(MessageExtensions.ToDtoProjection());
 
@@ -65,28 +65,31 @@ public class MessageRepository(AppDbContext context) : IMessageRepository
 
     public async Task<IReadOnlyList<MessageDto>> GetMessageThread(string currentMemberId, string recipientId)
     {
-        // var query = context.Messages
-        // .Where(x =>
-        //         (x.RecipientUsername == currentMemberId
-        //             && x.RecipientDeleted == false
-        //             && x.SenderUsername == recipientId)
-        //             ||
-        //         (x.SenderUsername == currentMemberId
-        //             && x.SenderDeleted == false
-        //             && x.RecipientUsername == recipientId)
-        // )
-        // .OrderBy(x => x.MessageSent)
-        // .AsQueryable();
+        await context.Messages
+        .Where(x =>
+            x.RecipientId == currentMemberId
+            && x.SenderId == recipientId
+            && x.DateRead == null
+        )
+        .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.DateRead, DateTime.UtcNow));
 
-        // var unreadMessages = query.Where(x => x.DateRead == null && x.RecipientUsername == currentMemberId).ToList();
-        // if (unreadMessages.Count != 0)
-        // {
-        //     unreadMessages.ForEach(x => x.DateRead = DateTime.UtcNow);
-    
-        // }
-
-        // return await query.ProjectTo<MessageDto>(mapper.ConfigurationProvider).ToListAsync();
-         throw new NotImplementedException();
+        return await context.Messages
+        .Where(x =>
+            (
+                x.RecipientId == currentMemberId 
+                && x.RecipientDeleted == false 
+                && x.SenderId == recipientId
+            )
+            || 
+            (
+                x.SenderId == currentMemberId 
+                && x.SenderDeleted == false 
+                && x.RecipientId == recipientId
+            )
+        )
+         .OrderBy(x => x.MessageSent)
+         .Select(MessageExtensions.ToDtoProjection())
+         .ToListAsync();
     }
 
     // public void RemoveConnection(Connection connection)
@@ -96,6 +99,6 @@ public class MessageRepository(AppDbContext context) : IMessageRepository
 
     public async Task<bool> SaveAllAsync()
     {
-       return await context.SaveChangesAsync()>0;
+        return await context.SaveChangesAsync() > 0;
     }
 }

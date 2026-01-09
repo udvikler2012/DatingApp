@@ -1,4 +1,3 @@
-using Api.Data;
 using Api.Dtos;
 using Api.Entities;
 using Api.Extensions;
@@ -8,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-public class MessagesController(IMessageRepository messageRepository, MemberRepository memberRepository) : BaseApiController
+public class MessagesController(IMessageRepository messageRepository, IMemberRepository memberRepository) : BaseApiController
 {
 
     [HttpPost]
@@ -39,34 +38,31 @@ public class MessagesController(IMessageRepository messageRepository, MemberRepo
         return await messageRepository.GetMessagesForMember(messageParams);
     }
 
-    [HttpGet("thread/{username}")]
-    public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread(string username)
+    [HttpGet("thread/{recipientId}")]
+    public async Task<ActionResult<IReadOnlyList<MessageDto>>> GetMessageThread(string recipientId)
     {
-        // var currentUsername = User.GetUsername();
-
-        // return Ok(await unitOfWork.MessageRepository.GetMessageThread(currentUsername, username));
-        return BadRequest("Failed to send message");
+        return Ok(await messageRepository.GetMessageThread(User.GetMemberId(), recipientId));
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteMessage(int id)
+    public async Task<ActionResult> DeleteMessage(string id)
     {
-        // var username = User.GetUsername();
+        var memberId = User.GetMemberId();
 
-        // var message = await unitOfWork.MessageRepository.GetMessage(id);
-        // if (message == null) return BadRequest("Cannot delete this message");
+        var message = await messageRepository.GetMessage(id);
+        if (message == null) return BadRequest("Cannot delete this message");
 
-        // if (message.SenderUsername != username && message.RecipientUsername != username) return Forbid();
+        if (message.SenderId != memberId && message.RecipientId != memberId) return BadRequest("You cannot delete this message");
 
-        // if (message.SenderUsername == username) message.SenderDeleted = true;
-        // if (message.RecipientUsername == username) message.RecipientDeleted = true;
-        // if (message is { SenderDeleted: true, RecipientDeleted: true })
-        // {
-        //     unitOfWork.MessageRepository.DeleteMessage(message);
-        // }
+        if (message.SenderId == memberId) message.SenderDeleted = true;
+        if (message.RecipientId == memberId) message.RecipientDeleted = true;
+        if (message is { SenderDeleted: true, RecipientDeleted: true })
+        {
+            messageRepository.DeleteMessage(message);
+        }
 
-        // if (await unitOfWork.Complete()) return Ok();
-
+        if (await messageRepository.SaveAllAsync()) return Ok();
+        
         return BadRequest("Problem deleting message");
     }
 }
