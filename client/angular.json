@@ -14,24 +14,29 @@
           "skipTests": true,
           "path": "src"
         },
-         "@schematics/angular:service": {
+        "@schematics/angular:service": {
           "skipTests": true,
           "path": "src/core/services"
         },
         "@schematics/angular:guard": {
           "skipTests": true,
-          "path":"src/core/guards"
+          "path": "src/core/guards"
         },
         "@schematics/angular:interceptor": {
           "skipTests": true,
-          "path":"src/core/interceptors"
+          "path": "src/core/interceptors"
         },
         "@schematics/angular:resolver": {
           "skipTests": true,
-          "path":"src"
-        }, "@schematics/angular:pipe": {
+          "path": "src"
+        },
+        "@schematics/angular:pipe": {
           "skipTests": true,
-          "path":"src/core/pipes"
+          "path": "src/core/pipes"
+        },
+        "@schematics/angular:directive": {
+          "skipTests": true,
+          "path": "src/shared/directives"
         }
       },
       "root": "",

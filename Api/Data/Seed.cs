@@ -10,9 +10,9 @@ namespace Api.Data;
 
 public class Seed
 {
-    public static async Task SeedUsers(AppDbContext context)
+    public static async Task SeedUsers(UserManager<AppUser> userManager)
     {
-        if (await context.Users.AnyAsync()) return;
+        if (await userManager.Users.AnyAsync()) return;
 
         var memberData = await File.ReadAllTextAsync("Data/UserSeedData.json");
         var members = JsonSerializer.Deserialize<List<SeedUserDto>>(memberData);
@@ -24,16 +24,13 @@ public class Seed
 
         foreach (var member in members)
         {
-            using var hmac = new HMACSHA512();
-            
             var user = new AppUser
             {
                 Id = member.Id,
                 Email = member.Email,
+                UserName = member.Email,
                 DisplayName = member.DisplayName,
                 ImageUrl = member.ImageUrl,
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("Pa$$w0rd")),
-                PasswordSalt = hmac.Key,
                 Member = new Member
                 {
                     Id = member.Id,
@@ -46,7 +43,6 @@ public class Seed
                     Country = member.Country,
                     LastActive = member.LastActive,
                     Created = member.Created
-
                 }
             };
 
@@ -56,9 +52,21 @@ public class Seed
                 MemberId = member.Id
             });
 
-            context.Users.Add(user);
+            var result = await userManager.CreateAsync(user, "Pa$$w0rd");
+            if (!result.Succeeded)
+            {
+                Console.WriteLine(result.Errors.First().Description);
+            }
+            await userManager.AddToRoleAsync(user, "Member");
         }
 
-        await context.SaveChangesAsync();
+        var admin = new AppUser
+        {
+            UserName = "admin@test.com",
+            Email = "admin@test.com",
+            DisplayName = "Admin"
+        };
+        await userManager.CreateAsync(admin, "Pa$$w0rd");
+        await userManager.AddToRolesAsync(admin, ["Admin","Moderator"]);
     }
 }

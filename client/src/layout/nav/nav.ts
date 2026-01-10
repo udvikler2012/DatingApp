@@ -5,16 +5,17 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ToastService } from '../../core/services/toast-service';
 import { themes } from '../theme';
 import { BusyService } from '../../core/services/busy-service';
+import { HasRole } from '../../shared/directives/has-role';
 
 @Component({
   selector: 'app-nav',
-  imports: [FormsModule, RouterLink, RouterLinkActive],
+  imports: [FormsModule, RouterLink, RouterLinkActive, HasRole],
   templateUrl: './nav.html',
   styleUrl: './nav.css',
 })
 export class Nav implements OnInit {
   protected accountService = inject(AccountService);
-  protected busyService=inject(BusyService);
+  protected busyService = inject(BusyService);
   private router = inject(Router);
   private toast = inject(ToastService);
   protected creds: any = {};
@@ -22,15 +23,15 @@ export class Nav implements OnInit {
   protected themes = themes;
 
   ngOnInit(): void {
-     document.documentElement.setAttribute('data-theme',this.selectedTheme());
+    document.documentElement.setAttribute('data-theme', this.selectedTheme());
   }
 
-  handleSelectTheme(theme:string){
+  handleSelectTheme(theme: string) {
     this.selectedTheme.set(theme);
-    localStorage.setItem('theme',theme);
-    document.documentElement.setAttribute('data-theme',theme);
-    const elem=document.activeElement as HTMLDivElement;
-    if(elem) elem.blur();
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    const elem = document.activeElement as HTMLDivElement;
+    if (elem) elem.blur();
 
   }
 
