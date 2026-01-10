@@ -1,9 +1,10 @@
-using System;
-
 namespace Api.Entities;
 
-public class Connection
+public class Connection(string connectionId, string userId)
 {
-public required string ConnectionId { get; set; }
-public required string Username { get; set; }
+    public string ConnectionId { get; set; } = connectionId;
+    public string UserId { get; set; } = userId;
+
+    // nav property
+    public Group Group { get; set; }=null!;
 }

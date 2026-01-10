@@ -2,10 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Api.Entities;
 
-public class Group
+public class Group(string name)
 {
     [Key]
-    public required string Name { get; set; }
+    public string Name { get; set; } = name;
 
-    public ICollection<Connection> Connections { get; set; }=[];
+    // nav property
+    public ICollection<Connection> Connections { get; set; } = [];
 }

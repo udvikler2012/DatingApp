@@ -1,120 +1,107 @@
-// using Api.Dto;
-// using Api.Entities;
-// using Api.Extensions;
-// using Api.Interfaces;
-// using AutoMapper;
-// using Microsoft.AspNetCore.SignalR;
+using Api.Dtos;
+using Api.Entities;
+using Api.Extensions;
+using Api.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 
-// namespace Api.SignalR;
+namespace Api.SignalR;
 
-// public class MessageHub(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<PresenceHub> presenceHub) : Hub
-// {
-//     public override async Task OnConnectedAsync()
-//     {
-//         var httpContext = Context.GetHttpContext();
-//         var otherUser = httpContext?.Request.Query["user"];
+public class MessageHub(IMessageRepository messageRepository, IMemberRepository memberRepository, IHubContext<PresenceHub> presenceHub) : Hub
+{
+    public override async Task OnConnectedAsync()
+    {
+        var httpContext = Context.GetHttpContext();
+        var otherUser = httpContext?.Request?.Query["userId"].ToString()
+         ?? throw new HubException("Other user not found");
 
-//         if (Context.User == null || string.IsNullOrEmpty(otherUser))
-//             // throw new Exception("cannot join group");
+        var groupName = GetGroupName(GetUserId(), otherUser);
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+        await AddToGroup(groupName);
 
-//         var groupName = GetGroupName(Context.User.GetUsername(), otherUser!);
-//         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-//         var group = await AddToGroup(groupName);
+        var messages = await messageRepository.GetMessageThread(GetUserId(), otherUser!);
 
-//         await Clients.Group(groupName).SendAsync("UpdatedGroup", group);
+        await Clients.Group(groupName).SendAsync("ReceiveMessageThread", messages);
+    }
 
-//         var messages = await unitOfWork.MessageRepository.GetMessageThread(Context.User.GetUsername(), otherUser!);
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        await messageRepository.RemoveConnection(Context.ConnectionId);
+        await base.OnDisconnectedAsync(exception);
+    }
 
-//         if(unitOfWork.HasChanges()) await unitOfWork.Complete();
+    public async Task SendMessage(CreateMessageDto createMessageDto)
+    {
+        var sender = await memberRepository.GetMemberByIdAsync(GetUserId());
+        var recipient = await memberRepository.GetMemberByIdAsync(createMessageDto.RecipientId);
+        if (recipient == null || sender == null || sender.Id == createMessageDto.RecipientId)
+            throw new HubException("Cannot send message");
 
-//         await Clients.Caller.SendAsync("ReceiveMessageThread", messages);
-//     }
+        var message = new Message
+        {
+            SenderId = sender.Id,
+            RecipientId = recipient.Id,
+            Content = createMessageDto.Content
+        };
 
-//     public override async Task OnDisconnectedAsync(Exception? exception)
-//     {
-//         var group = await RemoveFromMessageGroup();
-//         await Clients.Group(group.Name).SendAsync("UpdatedGroup", group);
-//         await base.OnDisconnectedAsync(exception);
-//     }
+        // Updating Delivered date
+        var groupName = GetGroupName(sender.Id, recipient.Id);
+        var group = await messageRepository.GetMessageGroup(groupName);
+        var userInGroup = group != null && group.Connections.Any(x => x.UserId == message.RecipientId);
+        if (userInGroup)
+        {
+            message.DateRead = DateTime.UtcNow;
+        }
 
-//     public async Task SendMessage(CreateMessageDto createMessageDto)
-//     {
-//         var username = Context.User?.GetUsername() ?? throw new Exception("Could not get user");
+        messageRepository.AddMessage(message);
 
-//         if (username == createMessageDto.RecipientUserName.ToLower())
-//             throw new HubException("Cannot sent message to yourself");
+        if (await messageRepository.SaveAllAsync())
+        {
+            await Clients.Group(groupName).SendAsync("NewMessage", message.ToDto());
 
-//         var sender = await unitOfWork.UserRepository.GetUserByUsernameAsync(username);
-//         var recipient = await unitOfWork.UserRepository.GetUserByUsernameAsync(createMessageDto.RecipientUserName);
+            var connections = await PresenceTracker.GetConnectionsForUser(recipient.Id);
+            if (connections != null && connections.Count > 0 && !userInGroup)
+            {
+                await presenceHub.Clients.Clients(connections).SendAsync("NewMessageReceived", message.ToDto());
+            }
+        }
+    }
 
-//         if (recipient == null || sender == null || sender.UserName == null || recipient.UserName == null)
-//             throw new HubException("Cannopt send message");
+    private async Task<bool> AddToGroup(string groupName)
+    {
+        var group = await messageRepository.GetMessageGroup(groupName);
+        var connection = new Connection(Context.ConnectionId, GetUserId());
+        if (group == null)
+        {
+            group = new Group(groupName);
+            messageRepository.AddGroup(group);
+        }
+        group.Connections.Add(connection);
+        return await messageRepository.SaveAllAsync();
+    }
 
-//         var message = new Message
-//         {
-//             Sender = sender,
-//             Recipient = recipient,
-//             SenderUsername = sender.UserName,
-//             RecipientUsername = recipient.UserName,
-//             Content = createMessageDto.Content
-//         };
+    private async Task<Group> RemoveFromMessageGroup()
+    {
+        // var group = await unitOfWork.MessageRepository.GetGroupForConnection(Context.ConnectionId);
+        // var connection = group?.Connections.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
+        // if (connection != null && group != null)
+        // {
+        //     unitOfWork.MessageRepository.RemoveConnection(connection);
+        //     if (await unitOfWork.Complete()) return group;
+        // }
 
-//         var groupName = GetGroupName(sender.UserName, recipient.UserName);
-//         var group = await unitOfWork.MessageRepository.GetMessageGroup(groupName);
-//         if (group != null && group.Connections.Any(x => x.Username == recipient.UserName))
-//         {
-//             message.DateRead = DateTime.UtcNow;
-//         }
-//         else
-//         {
-//             var connections = await PresenceTracker.GetConnectionsForUser(recipient.UserName);
-//             if (connections != null && connections?.Count != null)
-//             {
-//                 await presenceHub.Clients.Clients(connections).SendAsync("NewMessageReceived",
-//                     new { username = sender.UserName, knownAs = sender.KnownAs });
-//             }
-//         }
+        throw new Exception("Failed to remove from group");
+    }
 
-//         unitOfWork.MessageRepository.AddMessage(message);
-//         if (await unitOfWork.Complete())
-//         {
-//             await Clients.Group(groupName).SendAsync("NewMessage", mapper.Map<MessageDto>(message));
-//         }
-//     }
 
-//     private async Task<Group> AddToGroup(string groupName)
-//     {
-//         var username = Context.User?.GetUsername() ?? throw new Exception("cannot get username");
-//         var group = await unitOfWork.MessageRepository.GetMessageGroup(groupName);
-//         var connection = new Connection { ConnectionId = Context.ConnectionId, Username = username };
-//         if (group == null)
-//         {
-//             group = new Group { Name = groupName };
-//             unitOfWork.MessageRepository.AddGroup(group);
-//         }
-//         group.Connections.Add(connection);
 
-//         if (await unitOfWork.Complete()) return group;
+    private static string GetGroupName(string? caller, string? other)
+    {
+        var stringCompare = string.CompareOrdinal(caller, other) < 0;
+        return stringCompare ? $"{caller}-{other}" : $"{other}-{caller}";
+    }
 
-//         throw new HubException("Failed to join group");
-//     }
-
-//     private async Task<Group> RemoveFromMessageGroup()
-//     {
-//         var group = await unitOfWork.MessageRepository.GetGroupForConnection(Context.ConnectionId);
-//         var connection = group?.Connections.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
-//         if (connection != null && group != null)
-//         {
-//             unitOfWork.MessageRepository.RemoveConnection(connection);
-//             if (await unitOfWork.Complete()) return group;
-//         }
-
-//         throw new Exception("Failed to remove from group");
-//     }
-
-//     private string GetGroupName(string caller, string other)
-//     {
-//         var stringCompare = string.CompareOrdinal(caller, other) < 0;
-//         return stringCompare ? $"{caller}-{other}" : $"{other}-{caller}";
-//     }
-// }
+    private string GetUserId()
+    {
+        return Context.User?.GetMemberId() ?? throw new HubException("Cannot get member id");
+    }
+}
