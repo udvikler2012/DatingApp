@@ -46,7 +46,7 @@
             </div>
             @if (accountService.currentUser(); as user){
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="flex items-center text-white text-xl gap-3 cursor-pointer">
+                <div (click)="handleSelectUserItem()" tabindex="0" role="button" class="flex items-center text-white text-xl gap-3 cursor-pointer">
                     <img [src]="user?.imageUrl || '/user.png'" alt="user avatar" class="w-10 h-10 rounded-full">
                     <span>{{user.displayName}}</span>
                 </div>
@@ -59,7 +59,11 @@
             <form #loginForm="ngForm" (ngSubmit)="login()" class="flex items-center gap-3">
                 <input [(ngModel)]="creds.email" name="email" type="text" class="input" placeholder="Email">
                 <input [(ngModel)]="creds.Password" name="password" type="text" class="input" placeholder="Password">
-                <button type="Submit" class="btn">Login</button>
+                <button type="Submit" class="btn btn-primary ">
+                    @if(loading()){
+                    <span class="mr-2 loading loading-spinner"></span>
+                    }
+                    Login</button>
             </form>
             }
 

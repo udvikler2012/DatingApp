@@ -1,22 +1,35 @@
-// using Api.Interfaces;
+using Api.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
-// namespace Api.Data;
+namespace Api.Data;
 
-// public class UnitOfWork(DataContext context, IUserRepository userRepository, ILikesRepository likesRepository, IMessageRepository messageRepository) : IUnitOfWork
-// {
-//     public IUserRepository UserRepository => userRepository;
+public class UnitOfWork(AppDbContext context) : IUnitOfWork
+{
+    private IMemberRepository? _memberRepository;
+    private IMessageRepository? _messageRepository;
+    private ILikesRepository? _likesRepository;
 
-//     public IMessageRepository MessageRepository => messageRepository;
+    public IMemberRepository MemberRepository => _memberRepository ??= new MemberRepository(context);
 
-//     public ILikesRepository LikesRepository => likesRepository;
+    public IMessageRepository MessageRepository => _messageRepository ??= new MessageRepository(context);
 
-//     public async Task<bool> Complete()
-//     {
-//         return await context.SaveChangesAsync() > 0;
-//     }
+    public ILikesRepository LikesRepository => _likesRepository ??= new LikesRepository(context);
 
-//     public bool HasChanges()
-//     {
-//         return context.ChangeTracker.HasChanges();
-//     }
-// }
+    public async Task<bool> Complete()
+    {
+        try
+        {
+            return await context.SaveChangesAsync() > 0;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new Exception("An error occured while saving changes", ex);
+        }
+
+    }
+
+    public bool HasChanges()
+    {
+        return context.ChangeTracker.HasChanges();
+    }
+}

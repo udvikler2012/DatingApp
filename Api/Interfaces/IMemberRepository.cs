@@ -6,7 +6,6 @@ namespace Api.Interfaces;
 public interface IMemberRepository
 {
     void Update(Member user);
-    Task<bool> SaveAllAsync();
     Task<PaginatedResult<Member>> GetMembersAsync(MemberParams memberParams);
     Task<Member?> GetMemberByIdAsync(string id);
     Task<Member?> GetMemberForUpdate(string id);
