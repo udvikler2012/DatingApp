@@ -1,1 +1,4 @@
-{}
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/85302b06-86f9-45bc-9740-ce3232f407de/resourceGroups/ulukay2026DatingApprg/providers/Microsoft.Web/sites/ulukay2026DatingApp",
+    "appService.deploySubpath": "Api\\bin\\Publish"
+}
